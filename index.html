@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClipToGif - 動画・画面録画の軽量GIF変換ツール</title>
+  <meta name="description" content="スマートフォン画面録画や動画ファイルをブラウザ内ローカル処理で軽量GIFアニメーションに変換・最適化するWebツール。">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: data:; worker-src 'self' blob:;">
+
+  <!-- Open Graph / Twitter Card Metadata for SNS & GitHub Pages -->
+  <meta property="og:title" content="ClipToGif - 動画・画面録画の軽量GIF変換ツール">
+  <meta property="og:description" content="スマートフォン画面録画や動画ファイルをブラウザ内ローカル処理で軽量GIFアニメーションに変換・最適化するWebツール。">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="ClipToGif_promo.gif">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ClipToGif - 動画・画面録画の軽量GIF変換ツール">
+  <meta name="twitter:description" content="外部送信なし・ブラウザ内処理。スマホ縦動画も長辺基準で最適化する軽量GIF変換ツール。">
+  <meta name="twitter:image" content="ClipToGif_promo.gif">
+
+  <!-- Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+          </div>
+          <div>
+            <h1 class="brand-title">ClipToGif</h1>
+            <p class="brand-subtitle">動画・画面録画の軽量GIF変換ツール</p>
+          </div>
+        </div>
+        <div class="privacy-badge">
+          <span class="pulse-dot"></span>
+          <span>外部送信なし・ブラウザ内処理</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Section 1: File Drop Zone (Initial State) -->
+      <section id="drop-zone-section" class="card drop-zone-card">
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="動画ファイルをドロップまたは選択">
+          <input type="file" id="file-input" accept="video/mp4,video/quicktime,video/webm" class="visually-hidden">
+          <div class="drop-icon">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <h2 class="drop-title">動画ファイルをここにドロップ</h2>
+          <p class="drop-desc">またはボタンをクリックしてファイルを選択</p>
+          <div class="drop-actions">
+            <button type="button" id="btn-select-file" class="btn btn-primary btn-sm">動画を選択</button>
+            <button type="button" id="btn-sample-video" class="btn btn-secondary btn-sm">✨ サンプル動画で試す</button>
+          </div>
+          <div class="format-notes">
+            <span class="format-tag">MP4</span>
+            <span class="format-tag">MOV</span>
+            <span class="format-tag">WebM</span>
+          </div>
+          <p class="iphone-notice">
+            ※iPhone画面録画（HEVC/H.265）で再生エラーが出る場合は、「互換性優先」で撮影された動画またはH.264のMP4をご利用ください。
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 2: Video Editor Panel (Hidden Initially) -->
+      <section id="editor-section" class="card editor-card is-hidden">
+        <!-- Video Meta Header -->
+        <div class="meta-header">
+          <div class="file-meta">
+            <span id="meta-filename" class="meta-filename">--</span>
+            <span id="meta-resolution" class="meta-pill">-- × --</span>
+            <span id="meta-orientation" class="meta-pill">--</span>
+            <span id="meta-duration" class="meta-pill mono">--:--</span>
+          </div>
+          <button type="button" id="btn-reset" class="btn btn-ghost btn-sm" title="動画を閉じて別ファイルを選択">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            別の動画を選択
+          </button>
+        </div>
+
+        <!-- Video Player Display -->
+        <div class="video-container">
+          <video id="video-player" playsinline webkit-playsinline muted preload="auto"></video>
+          <div class="video-controls-bar">
+            <button type="button" id="btn-play-pause" class="btn-icon" aria-label="再生/一時停止">
+              <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <svg id="icon-pause" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="is-hidden">
+                <rect x="6" y="4" width="4" height="16"></rect>
+                <rect x="14" y="4" width="4" height="16"></rect>
+              </svg>
+            </button>
+            <span id="current-time-display" class="time-label mono">0.00s</span>
+            <input type="range" id="seek-slider" class="range-slider" min="0" max="100" step="0.05" value="0">
+            <span id="total-time-display" class="time-label mono">0.00s</span>
+          </div>
+        </div>
+
+        <!-- Range Selection Controls -->
+        <div class="control-panel">
+          <h3 class="panel-heading">1. 切り出し範囲を指定（最長10秒）</h3>
+          
+          <div class="range-sliders-wrapper">
+            <!-- Start Time Row -->
+            <div class="time-row">
+              <div class="time-row-label">
+                <span class="badge-point">開始</span>
+                <span id="start-time-val" class="time-val mono">0.0s</span>
+              </div>
+              <div class="time-row-controls">
+                <input type="range" id="slider-start" class="range-slider" min="0" max="10" step="0.1" value="0">
+                <button type="button" id="btn-set-start-now" class="btn btn-secondary btn-xs">現在位置を開始に設定</button>
+                <div class="nudge-group">
+                  <button type="button" id="btn-start-minus" class="btn btn-ghost btn-xs mono" title="0.1秒戻す">-0.1s</button>
+                  <button type="button" id="btn-start-plus" class="btn btn-ghost btn-xs mono" title="0.1秒進める">+0.1s</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- End Time Row -->
+            <div class="time-row">
+              <div class="time-row-label">
+                <span class="badge-point badge-point-end">終了</span>
+                <span id="end-time-val" class="time-val mono">4.0s</span>
+              </div>
+              <div class="time-row-controls">
+                <input type="range" id="slider-end" class="range-slider" min="0" max="10" step="0.1" value="4">
+                <button type="button" id="btn-set-end-now" class="btn btn-secondary btn-xs">現在位置を終了に設定</button>
+                <div class="nudge-group">
+                  <button type="button" id="btn-end-minus" class="btn btn-ghost btn-xs mono" title="0.1秒戻す">-0.1s</button>
+                  <button type="button" id="btn-end-plus" class="btn btn-ghost btn-xs mono" title="0.1秒進める">+0.1s</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="range-summary">
+            <div class="summary-item">
+              <span class="summary-label">切り出し時間:</span>
+              <span id="clip-duration-display" class="summary-val mono">4.0秒</span>
+              <span id="clip-duration-warning" class="warning-text is-hidden">（10秒以内に調整してください）</span>
+            </div>
+            <button type="button" id="btn-preview-range" class="btn btn-secondary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              選択区間をループ再生して確認
+            </button>
+          </div>
+        </div>
+
+        <!-- Output Settings Panel -->
+        <div class="control-panel">
+          <h3 class="panel-heading">2. 出力設定（長辺基準リサイズ ＆ FPS）</h3>
+          
+          <div class="settings-grid">
+            <!-- Resolution Option -->
+            <div class="setting-group">
+              <label class="setting-title">
+                解像度（長辺基準）
+                <span class="tooltip" title="元動画の縦横比（アスペクト比）を維持し、縦動画・横動画を問わず総ピクセル数を均一化します">ℹ️</span>
+              </label>
+              <div class="radio-pill-group">
+                <label class="radio-pill">
+                  <input type="radio" name="res-preset" value="320">
+                  <span class="pill-body">
+                    <span class="pill-title">チャット用</span>
+                    <span class="pill-desc">長辺 320px (最軽量)</span>
+                  </span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="res-preset" value="480" checked>
+                  <span class="pill-body">
+                    <span class="pill-title">ブログ用 <small class="rec-badge">推奨</small></span>
+                    <span class="pill-desc">長辺 480px (標準)</span>
+                  </span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="res-preset" value="640">
+                  <span class="pill-body">
+                    <span class="pill-title">高画質</span>
+                    <span class="pill-desc">長辺 640px (容量注意)</span>
+                  </span>
+                </label>
+              </div>
+              <div class="calc-output-info">
+                <span>出力予想サイズ: </span>
+                <strong id="calc-output-resolution" class="mono text-highlight">-- × -- px</strong>
+              </div>
+            </div>
+
+            <!-- FPS Option -->
+            <div class="setting-group">
+              <label class="setting-title">フレームレート (FPS)</label>
+              <div class="radio-pill-group">
+                <label class="radio-pill">
+                  <input type="radio" name="fps-preset" value="10" checked>
+                  <span class="pill-body">
+                    <span class="pill-title">10 FPS <small class="rec-badge">標準</small></span>
+                    <span class="pill-desc">軽量・滑らかバランス</span>
+                  </span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="fps-preset" value="15">
+                  <span class="pill-body">
+                    <span class="pill-title">15 FPS</span>
+                    <span class="pill-desc">滑らかさ重視 (容量増)</span>
+                  </span>
+                </label>
+              </div>
+              <div class="calc-output-info">
+                <span>総フレーム数概算: </span>
+                <strong id="calc-total-frames" class="mono text-highlight">-- フレーム</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Button Area -->
+        <div class="action-bar">
+          <button type="button" id="btn-generate-gif" class="btn btn-primary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            GIFアニメーションを生成
+          </button>
+        </div>
+      </section>
+
+      <!-- Section 3: Progress & Status Panel -->
+      <section id="progress-section" class="card progress-card is-hidden">
+        <div class="progress-container">
+          <div class="progress-header">
+            <div class="spinner"></div>
+            <div>
+              <h3 id="progress-title" class="progress-title">フレーム抽出中...</h3>
+              <p id="progress-detail" class="progress-detail mono">準備中...</p>
+            </div>
+          </div>
+          <div class="progress-bar-track">
+            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+          </div>
+          <div class="progress-actions">
+            <button type="button" id="btn-cancel-generation" class="btn btn-ghost btn-sm">キャンセル</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Result Preview & Download Panel -->
+      <section id="result-section" class="card result-card is-hidden">
+        <div class="result-header">
+          <div class="result-title-group">
+            <h2 class="result-heading">GIF生成完了</h2>
+            <div id="size-zone-badge" class="zone-badge zone-green">
+              <span class="zone-dot"></span>
+              <span id="zone-badge-text">🟢 軽量 (チャット共有に最適)</span>
+            </div>
+          </div>
+          <p id="zone-guidance-text" class="result-guidance">Slack / Discord等のチャットで快適にインライン共有できます。</p>
+        </div>
+
+        <!-- GIF Preview Container -->
+        <div class="gif-preview-container">
+          <img id="gif-preview-image" alt="生成されたGIFアニメーションのプレビュー" class="gif-preview-img">
+        </div>
+
+        <!-- Result Metadata Cards -->
+        <div class="meta-grid">
+          <div class="meta-cell">
+            <span class="cell-label">ファイルサイズ</span>
+            <span id="result-filesize" class="cell-val mono">--</span>
+          </div>
+          <div class="meta-cell">
+            <span class="cell-label">出力解像度</span>
+            <span id="result-dimensions" class="cell-val mono">--</span>
+          </div>
+          <div class="meta-cell">
+            <span class="cell-label">フレームレート</span>
+            <span id="result-fps" class="cell-val mono">--</span>
+          </div>
+          <div class="meta-cell">
+            <span class="cell-label">総フレーム数</span>
+            <span id="result-frames" class="cell-val mono">--</span>
+          </div>
+        </div>
+
+        <!-- Result Actions -->
+        <div class="result-actions">
+          <a id="btn-download-gif" class="btn btn-primary btn-lg" download="clip.gif">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            GIFをダウンロード
+          </a>
+          <button type="button" id="btn-edit-again" class="btn btn-secondary btn-lg">設定を変更して作り直す</button>
+        </div>
+      </section>
+
+      <!-- Section 5: Hidden Canvas for Frame Processing -->
+      <canvas id="hidden-canvas" class="visually-hidden"></canvas>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <p>&copy; 2026 Zero Dev (tk030) &middot; <a href="https://zero-dev.jp" target="_blank" rel="noopener">Zero Dev</a> &middot; MIT License</p>
+      <p class="disclaimer-text">免責事項: 本ツールはブラウザ上で動作する無保証のツールです。変換結果や動作についていかなる保証も行いません。</p>
+    </footer>
+  </div>
+
+  <!-- GIF Encoder Library: gif.js v0.2.0 (MIT License, Copyright (c) 2013 Johan Nordberg, see lib/LICENSE.gif.js)
+       Web Worker: lib/gif.worker.js (同階層lib/から非同期ロード) -->
+  <script src="lib/gif.js"></script>
+  <!-- Modular Application Scripts -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

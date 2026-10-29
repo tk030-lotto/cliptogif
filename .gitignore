@@ -1,0 +1,12 @@
+# 許可リスト方式: すべて除外して、公開するものだけを許可する
+/*
+!/.gitignore
+!/.nojekyll
+!/index.html
+!/css/
+!/js/
+!/lib/
+!/LICENSE
+!/README.md
+!/ツール起動.bat
+!/ClipToGif_promo.gif
