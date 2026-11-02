@@ -41,6 +41,7 @@ class App {
     this.currentMeta = null;
     this.isProcessing = false;
     this.generationSessionId = 0;
+    this.generationTask = null;
 
     this.bindEvents();
   }
@@ -64,6 +65,7 @@ class App {
 
     // Play/Pause button
     this.ui.btnPlayPause.addEventListener('click', () => {
+      if (this.isProcessing) return;
       this.videoController.togglePlay();
       this.ui.updatePlayButton(!this.ui.videoPlayer.paused);
     });
@@ -72,12 +74,13 @@ class App {
 
     // Seek Slider
     this.ui.seekSlider.addEventListener('input', (e) => {
+      if (this.isProcessing) return;
       this.videoController.seek(parseFloat(e.target.value));
     });
 
     // Start / End Range Sliders
-    this.ui.sliderStart.addEventListener('input', () => this.syncRange(true));
-    this.ui.sliderEnd.addEventListener('input', () => this.syncRange(false));
+    this.ui.sliderStart.addEventListener('input', () => { if (this.isProcessing) return; this.syncRange(true); });
+    this.ui.sliderEnd.addEventListener('input', () => { if (this.isProcessing) return; this.syncRange(false); });
 
     // Quick set buttons
     this.ui.btnSetStartNow.addEventListener('click', () => {
@@ -97,6 +100,7 @@ class App {
 
     // Loop Preview
     this.ui.btnPreviewRange.addEventListener('click', () => {
+      if (this.isProcessing) return;
       const s = parseFloat(this.ui.sliderStart.value);
       const e = parseFloat(this.ui.sliderEnd.value);
       if (this.videoController.isRangeLooping) {
@@ -128,6 +132,7 @@ class App {
   }
 
   handleFileSelected(file) {
+    if (this.isProcessing) return;
     this.ui.showProgress('動画を読み込んでいます...');
     this.videoController.loadVideo(file);
   }
@@ -182,8 +187,8 @@ class App {
     }
   }
 
-  async generateGif() {
-    if (this.isProcessing || !this.currentMeta) return;
+  generateGif() {
+    if (this.isProcessing || !this.currentMeta) return null;
 
     const startTime = parseFloat(this.ui.sliderStart.value);
     const endTime = parseFloat(this.ui.sliderEnd.value);
@@ -195,6 +200,12 @@ class App {
     }
 
     this.isProcessing = true;
+    // キャンセル時に終了を待てるよう、実行中の処理を保持する (F-06)
+    this.generationTask = this._generate(startTime, endTime);
+    return this.generationTask;
+  }
+
+  async _generate(startTime, endTime) {
     const currentSessionId = ++this.generationSessionId;
     this.videoController.stopRangeLoop();
 
@@ -263,21 +274,43 @@ class App {
       this.ui.showEditor();
     } finally {
       this.isProcessing = false;
+      this.generationTask = null;
+      this.ui.setCancelPending(false);
       this.ui.hideProgress();
     }
   }
 
-  cancelGeneration() {
+  /**
+   * 生成を中断し、旧ループが終わるまで待つ (F-06)
+   * 待たずに再生成すると、2つのループが同じ video の currentTime を奪い合う。
+   */
+  async cancelGeneration() {
+    const task = this.generationTask;
     this.generationSessionId = 0;
     this.frameExtractor.abort();
     this.gifEncoder.abort();
-    this.isProcessing = false;
-    this.ui.hideProgress();
-    this.ui.showEditor();
+
+    if (!task) {
+      this.isProcessing = false;
+      this.ui.hideProgress();
+      this.ui.showEditor();
+      return;
+    }
+
+    this.ui.setCancelPending(true);
+    try {
+      await task;
+    } catch (err) {
+      console.warn('キャンセル待ちの例外:', err);
+    } finally {
+      this.ui.setCancelPending(false);
+      this.ui.hideProgress();
+      this.ui.showEditor();
+    }
   }
 
-  resetAll() {
-    this.cancelGeneration();
+  async resetAll() {
+    await this.cancelGeneration();
     this.videoController.cleanup();
     this.gifEncoder.cleanup();
     this.currentMeta = null;

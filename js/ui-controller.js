@@ -72,7 +72,36 @@ export class UIController {
     this.btnEditAgain = document.getElementById('btn-edit-again');
   }
 
+  /**
+   * 生成中は編集UIを操作できないようにする (F-03)
+   * inert が使えない環境でも、CSS の .is-locked でクリックを防ぐ。
+   */
+  setEditorLocked(locked) {
+    if (!this.editorSection) return;
+    if (locked) {
+      this.editorSection.setAttribute('inert', '');
+      this.editorSection.setAttribute('aria-busy', 'true');
+      this.editorSection.classList.add('is-locked');
+    } else {
+      this.editorSection.removeAttribute('inert');
+      this.editorSection.removeAttribute('aria-busy');
+      this.editorSection.classList.remove('is-locked');
+    }
+  }
+
+  /**
+   * キャンセル処理中は、生成・キャンセルの再操作を止める (F-06)
+   */
+  setCancelPending(pending) {
+    if (this.btnCancelGeneration) {
+      this.btnCancelGeneration.disabled = pending;
+      this.btnCancelGeneration.textContent = pending ? 'キャンセル中...' : 'キャンセル';
+    }
+    if (pending && this.btnGenerateGif) this.btnGenerateGif.disabled = true;
+  }
+
   showDropZone() {
+    this.setEditorLocked(false);
     this.dropSection.classList.remove('is-hidden');
     this.editorSection.classList.add('is-hidden');
     this.progressSection.classList.add('is-hidden');
@@ -80,6 +109,7 @@ export class UIController {
   }
 
   showEditor() {
+    this.setEditorLocked(false);
     this.dropSection.classList.add('is-hidden');
     this.editorSection.classList.remove('is-hidden');
     this.progressSection.classList.add('is-hidden');
@@ -87,6 +117,7 @@ export class UIController {
   }
 
   showProgress(title = 'GIFを生成中...') {
+    this.setEditorLocked(true);
     this.progressTitle.textContent = title;
     this.progressDetail.textContent = '初期化中...';
     this.progressBarFill.style.width = '0%';
@@ -95,6 +126,7 @@ export class UIController {
   }
 
   hideProgress() {
+    this.setEditorLocked(false);
     this.progressSection.classList.add('is-hidden');
     this.refreshGenerateButtonState();
   }
@@ -109,6 +141,7 @@ export class UIController {
   }
 
   showResult() {
+    this.setEditorLocked(false);
     this.progressSection.classList.add('is-hidden');
     this.resultSection.classList.remove('is-hidden');
   }
