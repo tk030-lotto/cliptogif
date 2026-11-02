@@ -70,6 +70,37 @@ export class UIController {
     this.resultFrames = document.getElementById('result-frames');
     this.btnDownloadGif = document.getElementById('btn-download-gif');
     this.btnEditAgain = document.getElementById('btn-edit-again');
+
+    // エラー表示 (F-21)
+    this.errorBanner = document.getElementById('error-banner');
+    this.errorBannerText = document.getElementById('error-banner-text');
+    this.btnErrorClose = document.getElementById('error-banner-close');
+    if (this.btnErrorClose) {
+      this.btnErrorClose.addEventListener('click', () => this.hideError());
+    }
+  }
+
+  /**
+   * エラーを画面内に表示する（alert の代わり）(F-21)
+   * @param {string} message
+   */
+  showError(message) {
+    if (!this.errorBanner) return;
+    if (this.errorBannerText) this.errorBannerText.textContent = message;
+    this.errorBanner.classList.remove('is-hidden');
+    // 読み上げ・キーボードで気づけるよう、閉じるボタンへフォーカスを移す
+    if (this.btnErrorClose && typeof this.btnErrorClose.focus === 'function') {
+      this.btnErrorClose.focus();
+    }
+  }
+
+  /**
+   * エラー表示を消す（次の操作の開始時に呼ぶ）
+   */
+  hideError() {
+    if (!this.errorBanner) return;
+    this.errorBanner.classList.add('is-hidden');
+    if (this.errorBannerText) this.errorBannerText.textContent = '';
   }
 
   /**

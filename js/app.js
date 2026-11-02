@@ -17,7 +17,7 @@ class App {
       videoEl: this.ui.videoPlayer,
       onLoadedMetadata: (meta) => this.handleLoadedMetadata(meta),
       onTimeUpdate: (cur) => this.handleTimeUpdate(cur),
-      onError: (msg) => alert(msg)
+      onError: (msg) => this.ui.showError(msg)
     });
 
     this.frameExtractor = new FrameExtractor({
@@ -35,7 +35,7 @@ class App {
       dropZoneEl: document.getElementById('drop-zone'),
       fileInputEl: document.getElementById('file-input'),
       onFileSelected: (file) => this.handleFileSelected(file),
-      onError: (msg) => alert(msg)
+      onError: (msg) => this.ui.showError(msg)
     });
 
     this.currentMeta = null;
@@ -57,7 +57,7 @@ class App {
           const sampleFile = await SampleVideoGenerator.createSampleVideoFile();
           this.handleFileSelected(sampleFile);
         } catch (err) {
-          alert('サンプル動画の生成に失敗しました: ' + err.message);
+          this.ui.showError('サンプル動画の生成に失敗しました: ' + err.message);
           this.ui.showDropZone();
         }
       });
@@ -132,6 +132,7 @@ class App {
   }
 
   handleFileSelected(file) {
+    this.ui.hideError();
     if (this.isProcessing) return;
     this.ui.showProgress('動画を読み込んでいます...');
     this.videoController.loadVideo(file);
@@ -139,7 +140,7 @@ class App {
 
   handleLoadedMetadata(meta) {
     if (!meta || typeof meta.duration !== 'number' || isNaN(meta.duration) || meta.duration <= 0) {
-      alert('動画の再生時間を正しく取得できませんでした。破損しているか非対応の形式です。');
+      this.ui.showError('動画の再生時間を正しく取得できませんでした。破損しているか非対応の形式です。');
       this.ui.hideProgress();
       this.resetAll();
       return;
@@ -188,6 +189,7 @@ class App {
   }
 
   generateGif() {
+    this.ui.hideError();
     if (this.isProcessing || !this.currentMeta) return null;
 
     const startTime = parseFloat(this.ui.sliderStart.value);
@@ -195,7 +197,7 @@ class App {
     const duration = endTime - startTime;
 
     if (duration < SETTINGS.MIN_CLIP_SECONDS || duration > SETTINGS.MAX_CLIP_SECONDS + 0.1) {
-      alert(`変換範囲は${SETTINGS.MIN_CLIP_SECONDS}秒以上、${SETTINGS.MAX_CLIP_SECONDS}秒以内で指定してください。`);
+      this.ui.showError(`変換範囲は${SETTINGS.MIN_CLIP_SECONDS}秒以上、${SETTINGS.MAX_CLIP_SECONDS}秒以内で指定してください。`);
       return;
     }
 
@@ -269,7 +271,7 @@ class App {
       const isAbort = err.name === 'AbortError' || err.message === 'Extraction cancelled by user' || err.message === 'Encoding aborted';
       if (!isAbort) {
         console.error(err);
-        alert(`GIFの生成に失敗しました: ${err.message}`);
+        this.ui.showError(`GIFの生成に失敗しました: ${err.message}`);
       }
       this.ui.showEditor();
     } finally {
@@ -310,6 +312,7 @@ class App {
   }
 
   async resetAll() {
+    this.ui.hideError();
     await this.cancelGeneration();
     this.videoController.cleanup();
     this.gifEncoder.cleanup();

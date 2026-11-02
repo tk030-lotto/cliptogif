@@ -49,6 +49,12 @@
 
     <!-- Main Content Area -->
     <main class="main-content">
+      <!-- エラー表示（alert の代わり）(F-21) -->
+      <div id="error-banner" class="error-banner is-hidden" role="alert" aria-live="assertive">
+        <span class="error-banner-icon" aria-hidden="true">!</span>
+        <p id="error-banner-text" class="error-banner-text"></p>
+        <button type="button" id="error-banner-close" class="error-banner-close" aria-label="エラーを閉じる">×</button>
+      </div>
       <!-- Section 1: File Drop Zone (Initial State) -->
       <section id="drop-zone-section" class="card drop-zone-card">
         <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="動画ファイルをドロップまたは選択">
