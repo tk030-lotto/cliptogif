@@ -44,7 +44,7 @@ body {
   flex-direction: column;
 }
 .mono { font-family: var(--font-mono); }
-.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; pointer-events: none; }
 .is-hidden { display: none !important; }
 .app-container { max-width: 860px; width: 100%; margin: 0 auto; padding: 24px 20px 48px; display: flex; flex-direction: column; gap: 20px; }
 .app-header { border-bottom: 1px solid var(--border-subtle); padding-bottom: 16px; }
